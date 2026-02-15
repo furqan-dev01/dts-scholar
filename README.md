@@ -51,7 +51,7 @@ To get a local copy up and running, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
-    git clone [repository_url]
+    git clone https://github.com/furqan-dev01/dts-scholar.git
     cd schooluser_application
     ```
 
