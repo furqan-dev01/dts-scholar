@@ -7,7 +7,7 @@ import '../../../services/loading_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../config/firestore_config.dart';
 import '../../../theme/app_colors.dart';
-import '../../auth/screens/role_selection_screen.dart';
+import '../../auth/screens/login_screen.dart';
 import 'manage_students_screen.dart';
 import 'manage_notices_screen.dart';
 import 'manage_videos_screen.dart';
@@ -214,13 +214,39 @@ class AdminHomeContent extends StatelessWidget {
                             final schoolName = data['name'] ?? 'Admin';
                             welcomeText = 'Welcome, $schoolName';
                           }
-                          return Text(
-                            welcomeText,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                welcomeText,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Image.asset(
+                                    'assets/more/devtrisoft_icon.png',
+                                    width: 14,
+                                    height: 14,
+                                    color: Colors.white.withOpacity(0.8),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'product by DevTriSoft',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           );
                         },
                       ),
@@ -571,7 +597,7 @@ class AdminHomeContent extends StatelessWidget {
       if (context.mounted) {
         LoadingService().hide();
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+          MaterialPageRoute(builder: (context) => const LoginScreen(userRole: 'admin')),
           (route) => false,
         );
       }

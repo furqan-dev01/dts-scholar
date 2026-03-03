@@ -82,13 +82,6 @@ class RoleSelectionScreen extends StatelessWidget {
                           children: [
                             _buildRoleOption(
                               context,
-                              title: 'Admin',
-                              iconPath: 'assets/more/admin_icon.png',
-                              role: 'admin',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildRoleOption(
-                              context,
                               title: 'Student',
                               iconPath: 'assets/more/student_icon.png',
                               role: 'student',
@@ -100,13 +93,6 @@ class RoleSelectionScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildRoleOption(
-                              context,
-                              title: 'Admin',
-                              iconPath: 'assets/more/admin_icon.png',
-                              role: 'admin',
-                            ),
-                            SizedBox(width: (screenWidth * 0.06).clamp(16.0, 32.0)),
                             _buildRoleOption(
                               context,
                               title: 'Student',

@@ -13,8 +13,6 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  int _selectedFilterIndex = 0;
-  final List<String> _filters = ["All", "Fees", "Videos", "Announcements"];
   String? _schoolId;
   bool _isLoading = true;
   StreamSubscription? _schoolIdSubscription;
@@ -225,52 +223,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 40,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: _filters.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 10),
-                  itemBuilder: (context, index) {
-                    final isSelected = _selectedFilterIndex == index;
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => setState(() => _selectedFilterIndex = index),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Text(
-                            _filters[index],
-                            style: TextStyle(
-                              color: isSelected ? AppColors.deepBlue : Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
             ],
           ),
         ),
@@ -419,85 +371,18 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           iconBgColor = const Color(0xFFEA580C).withOpacity(0.12);
                         }
 
+                        final borderColor = index % 2 == 0 ? AppColors.deepBlue : AppColors.maroon;
                         return Container(
                           margin: const EdgeInsets.only(bottom: 14),
-                          padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(22),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.deepBlue.withOpacity(0.06),
-                                blurRadius: 18,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
+                            border: Border.all(color: borderColor, width: 2),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: iconBgColor,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(icon, color: iconColor, size: 26),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            title,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppColors.deepBlue,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey.shade100,
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          child: Text(
-                                            timeStr,
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey.shade600,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (message.isNotEmpty) ...[
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        message,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey.shade600,
-                                          height: 1.45,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ],
+                          child: ListTile(
+                            leading: Icon(Icons.notifications, color: borderColor),
+                            title: Text(notice['title'] ?? 'No Title'),
+                            subtitle: Text(notice['message'] ?? ''),
+                            trailing: Text(_formatTimestamp(notice['created_at'] as Timestamp?)),
                           ),
                         );
                       },

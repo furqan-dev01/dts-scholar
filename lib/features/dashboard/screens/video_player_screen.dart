@@ -71,12 +71,20 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       return Scaffold(
         backgroundColor: const Color(0xFFF5F7FA),
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.deepBlue,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
-            color: AppColors.deepBlue,
+            color: Colors.white,
             onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            "Watching",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+            ),
           ),
         ),
         body: Center(
@@ -208,17 +216,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         return Scaffold(
           backgroundColor: const Color(0xFFF5F7FA),
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.deepBlue,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
-              color: AppColors.deepBlue,
+              color: Colors.white,
               onPressed: () => Navigator.pop(context),
             ),
             title: const Text(
               "Watching",
               style: TextStyle(
-                color: AppColors.deepBlue,
+                color: Colors.white,
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
               ),
@@ -227,7 +235,30 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              player,
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: AppColors.deepBlue,
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.deepBlue.withOpacity(0.06),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: player,
+                  ),
+                ),
+              ),
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
@@ -334,6 +365,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: AppColors.deepBlue,
+                                    width: 1,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: AppColors.deepBlue.withOpacity(0.06),

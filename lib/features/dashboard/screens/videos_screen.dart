@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../theme/app_colors.dart';
 import '../../../global/videos/video_data.dart';
-import 'video_player_screen.dart';
+import 'subject_videos_screen.dart';
 
 class VideosScreen extends StatefulWidget {
   const VideosScreen({super.key});
@@ -16,6 +16,8 @@ class VideosScreen extends StatefulWidget {
 class _VideosScreenState extends State<VideosScreen> {
   String? _studentId;
   bool _isLoadingId = true;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -34,24 +36,13 @@ class _VideosScreenState extends State<VideosScreen> {
       });
     }
   }
-
-  void _openVideoPlayer(
-    BuildContext context,
-    VideoModel video,
-    List<VideoModel> relatedVideos,
-  ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => VideoPlayerScreen(
-          videoUrl: video.videoUrl,
-          title: video.title,
-          description: video.description,
-          relatedVideos: relatedVideos,
-        ),
-      ),
-    );
+  
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -61,233 +52,162 @@ class _VideosScreenState extends State<VideosScreen> {
       );
     }
 
-    if (_studentId == null) {
+    if (_studentId == null) { 
       return const Center(child: Text("Student information not found"));
     }
 
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('students')
-          .doc(_studentId)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.maroon),
-          );
-        }
+    final Map<String, String> subjectImages = {
+      'English': 'assets/more/english.png',
+      'Social Studies': 'assets/more/social.png',
+      'Urdu': 'assets/more/urdu.png',
+      'Math': 'assets/more/maths.png',
+      'General Science': 'assets/more/science.png',
+      'Islamiyat': 'assets/more/islamiyat.png',
+      'General Knowledge': 'assets/more/general_knowledge.png',
+      'Pakistan Studies': 'assets/more/pakistan_studies.png',
+      'Geography': 'assets/more/geo.png',
+      'History': 'assets/more/history.png',
+      'Arabic': 'assets/more/arabic.png',
+    };
 
-        final data = snapshot.data!.data() as Map<String, dynamic>?;
-        final studentClass = data?['class'] as String?;
-        final schoolId = data?['school_id'] as String?;
+    final List<String> subjects = [
+      'English',
+      'Social Studies',
+      'Urdu',
+      'Math',
+      'General Science',
+      'Islamiyat',
+      'General Knowledge',
+      'Pakistan Studies',
+      'Geography',
+      'History',
+      'Arabic',
+    ];
 
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('videos')
-              .where('school_id', isEqualTo: schoolId)
-              .where('class', isEqualTo: studentClass)
-              .snapshots(),
-          builder: (context, videoSnapshot) {
-            // Get videos based on student class
-            final allVideos = videoSnapshot.hasData
-                ? videoSnapshot.data!.docs.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return VideoModel(
-                      title: data['title'] ?? '',
-                      description: data['description'] ?? '',
-                      thumbnailUrl: data['thumbnailUrl'] ?? '',
-                      videoUrl: data['videoUrl'] ?? '',
-                      subject: data['subject'] ?? '',
-                    );
-                  }).toList()
-                : <VideoModel>[];
-
-            // Group videos by subject
-            final Map<String, List<VideoModel>> groupedVideos = {};
-            for (var video in allVideos) {
-              if (!groupedVideos.containsKey(video.subject)) {
-                groupedVideos[video.subject] = [];
-              }
-              groupedVideos[video.subject]!.add(video);
-            }
-
-            return Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.only(
-                    top: 56,
-                    left: 20,
-                    right: 20,
-                    bottom: 24,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.deepBlue,
-                        Color(0xFF003380),
-                        AppColors.maroon,
-                      ],
-                      stops: [0.0, 0.5, 1.0],
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.only(
+            top: 56,
+            left: 20,
+            right: 20,  
+            bottom: 24,
+          ),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.deepBlue,
+                Color(0xFF003380),
+                AppColors.maroon,
+              ],
+              stops: [0.0, 0.5, 1.0],
+            ),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(32),
+              bottomRight: Radius.circular(32),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.deepBlue.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(32),
-                      bottomRight: Radius.circular(32),
+                    child: const Icon(
+                      Icons.library_books,
+                      color: Colors.white,
+                      size: 26,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.deepBlue.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                  const SizedBox(width: 14),
+                  const Text(
+                    "Subjects",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(16.0),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16.0,
+              mainAxisSpacing: 16.0,
+              childAspectRatio: 1.2,
+            ),
+            itemCount: subjects.length,
+            itemBuilder: (context, index) {
+              final subject = subjects[index];
+              final borderColor = index % 2 == 0 ? AppColors.deepBlue : AppColors.maroon;
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SubjectVideosScreen(subject: subject),
+                    ),
+                  );
+                },
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: borderColor, width: 1),
+                  ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(14),
+                          if (subjectImages.containsKey(subject))
+                            Image.asset(
+                              subjectImages[subject]!,
+                              height: 80,
+                              width: 80,
+                            )
+                          else
+                            const Icon(
+                              Icons.subject,
+                              size: 80,
+                              color: AppColors.deepBlue,
                             ),
-                            child: const Icon(
-                              Icons.play_circle_rounded,
-                              color: Colors.white,
-                              size: 26,
+                  
+                          Text(
+                            subject,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ),
-                          const SizedBox(width: 14),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Videos",
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              if (studentClass != null) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  "For $studentClass",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: "Search videos...",
-                            hintStyle: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 14,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.search_rounded,
-                              color: Colors.white.withOpacity(0.8),
-                              size: 22,
-                            ),
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                          ),
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-                Expanded(
-                  child: allVideos.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.deepBlue.withOpacity(0.08),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.video_library_rounded,
-                                    size: 56,
-                                    color: AppColors.deepBlue.withOpacity(0.5),
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                                Text(
-                                  "No videos for $studentClass yet",
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.deepBlue,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "New lessons will appear here soon.",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      : ListView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.only(top: 20, bottom: 40),
-                          children: groupedVideos.entries.map((entry) {
-                            return Column(
-                              children: [
-                                _VideoSection(
-                                  subject: entry.key,
-                                  videos: entry.value,
-                                  onVideoTap: (video) => _openVideoPlayer(
-                                    context,
-                                    video,
-                                    allVideos,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -381,6 +301,10 @@ class _VideoCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.deepBlue,
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
                 color: AppColors.deepBlue.withOpacity(0.06),
