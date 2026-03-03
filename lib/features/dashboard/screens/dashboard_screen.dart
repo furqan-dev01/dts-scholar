@@ -8,7 +8,7 @@ import '../../../services/auth_service.dart';
 import '../../../services/local_notification_service.dart';
 import '../../../services/notice_service.dart';
 import '../../../services/background_service.dart';
-import '../../auth/screens/role_selection_screen.dart';
+import '../../auth/screens/login_screen.dart';
 import '../../../global/videos/video_data.dart';
 import 'videos_screen.dart';
 import 'video_player_screen.dart';
@@ -231,11 +231,10 @@ class _DashboardContentState extends State<DashboardContent> {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
 
@@ -285,7 +284,7 @@ class _DashboardContentState extends State<DashboardContent> {
       if (mounted) {
         LoadingService().hide();
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
           (route) => false,
         );
       }
@@ -475,123 +474,159 @@ class _DashboardContentState extends State<DashboardContent> {
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.only(top: 56, left: 20, right: 20, bottom: 32),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.deepBlue, Color(0xFF003380), AppColors.maroon],
-          stops: [0.0, 0.5, 1.0],
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Overscroll filler for the top
+        Positioned(
+          top: -1000,
+          left: 0,
+          right: 0,
+          height: 1000,
+          child: Container(
+            color: AppColors.deepBlue,
+          ),
         ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.deepBlue.withOpacity(0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Decorative circles
-          Positioned(
-            top: -20,
-            right: -20,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.06),
-              ),
+        Container(
+          padding:
+              const EdgeInsets.only(top: 56, left: 20, right: 20, bottom: 32),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.deepBlue, Color(0xFF003380), AppColors.maroon],
+              stops: [0.0, 0.5, 1.0],
             ),
-          ),
-          Positioned(
-            bottom: -30,
-            left: -30,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
-              ),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(32),
+              bottomRight: Radius.circular(32),
             ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Hi, $_studentName",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.school_rounded,
-                          size: 16,
-                          color: Colors.white.withOpacity(0.85),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _className,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              GestureDetector(
-                onTap: _handleLogout,
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.logout_rounded,
-                      color: Colors.red,
-                      size: 28,
-                    ),
-                  ),
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.deepBlue.withOpacity(0.35),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
-        ],
-      ),
+          child: Stack(
+            children: [
+              // Decorative circles
+              Positioned(
+                top: 56,
+                right: -20,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.06),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -30,
+                left: -30,
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.05),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Hi, $_studentName",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.school_rounded,
+                              size: 16,
+                              color: Colors.white.withOpacity(0.85),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _className,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Image.asset(
+                              'assets/more/devtrisoft_icon.png',
+                              width: 14,
+                              height: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'product by DevTriSoft',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _handleLogout,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.logout_rounded,
+                          color: Colors.red,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

@@ -6,6 +6,7 @@ import '../../admin/screens/admin_dashboard_screen.dart';
 import '../../dashboard/screens/dashboard_screen.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/loading_service.dart';
+import '../../../widgets/wave_clipper.dart';
 
 class LoginScreen extends StatefulWidget {
   final String userRole;
@@ -143,283 +144,328 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isAdmin = widget.userRole == 'admin';
+    final screenSize = MediaQuery.sizeOf(context);
+    final screenWidth = screenSize.width;
+    final screenHeight = screenSize.height;
+
+    // Responsive measurements
+    final headerHeight = (screenHeight * 0.35).clamp(200.0, 350.0);
+    final logoSize = (screenWidth * 0.4).clamp(100.0, 200.0);
+    final horizontalPadding = (screenWidth * 0.08).clamp(16.0, 40.0);
+
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.deepBlue, Color(0xFF003380), AppColors.maroon],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                (MediaQuery.sizeOf(context).width * 0.06).clamp(16.0, 24.0),
-                16,
-                (MediaQuery.sizeOf(context).width * 0.06).clamp(16.0, 24.0),
-                MediaQuery.viewInsetsOf(context).bottom,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Image.asset(
-                      'assets/more/devtrisoft_icon.png',
-                      width: 88,
-                      height: 88,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'SCHOLARSHIP SCHOOL',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      isAdmin ? 'Admin / Teacher' : 'Student',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withOpacity(0.95),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  Container(
-                    constraints: BoxConstraints(maxWidth: 400),
-                    padding: EdgeInsets.only(
-                      top: 16,
-                      left: (MediaQuery.sizeOf(context).width * 0.06).clamp(
-                        16.0,
-                        24.0,
-                      ),
-                      right: (MediaQuery.sizeOf(context).width * 0.06).clamp(
-                        16.0,
-                        24.0,
+      backgroundColor: AppColors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                ClipPath(
+                  clipper: WaveClipper(),
+                  child: Container(
+                    height: headerHeight,
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppColors.deepBlue, AppColors.maroon],
                       ),
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.deepBlue.withOpacity(0.2),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 0,
+                  bottom: 50,
+                  left: 20,
+                  right: 20,
+                  child: Center(
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        TextField(
-                          controller: _emailController,
-                          style: const TextStyle(
-                            color: AppColors.deepBlue,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Icon(
-                                isAdmin
-                                    ? Icons.email_rounded
-                                    : Icons.badge_rounded,
-                                color: AppColors.maroon.withOpacity(0.7),
-                                size: 22,
+                        const Text(
+                          'Welcome to Digital Scholarship School',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            fontStyle: FontStyle.italic,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 2),
+                                blurRadius: 4.0,
+                                color: Colors.black26,
                               ),
-                            ),
-                            labelText: isAdmin ? 'Email' : 'Username',
-                            labelStyle: TextStyle(
-                              color: AppColors.maroon.withOpacity(0.8),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.lightGrey.withOpacity(0.3),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(
-                                color: AppColors.maroon,
-                                width: 2,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 16,
-                            ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 18),
-                        TextField(
-                          controller: _passwordController,
-                          obscureText: true,
-                          style: const TextStyle(
-                            color: AppColors.deepBlue,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            prefixIcon: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Icon(
-                                Icons.lock_rounded,
-                                color: AppColors.maroon.withOpacity(0.7),
-                                size: 22,
-                              ),
-                            ),
-                            labelText: 'Password',
-                            labelStyle: TextStyle(
-                              color: AppColors.maroon.withOpacity(0.8),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.lightGrey.withOpacity(0.3),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(
-                                color: AppColors.maroon,
-                                width: 2,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 16,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: Checkbox(
-                                value: _rememberMe,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _rememberMe = value ?? false;
-                                  });
-                                },
-                                activeColor: AppColors.maroon,
-                                checkColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                side: BorderSide(
-                                  color: AppColors.maroon.withOpacity(0.6),
-                                  width: 1.5,
-                                ),
-                              ),
+                            Image.asset(
+                              'assets/more/devtrisoft_icon.png',
+                              width: 16,
+                              height: 16,
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 6),
                             Text(
-                              'Remember me',
+                              'product by DevTriSoft',
                               style: TextStyle(
-                                color: AppColors.deepBlue.withOpacity(0.9),
-                                fontSize: 14,
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.9),
                                 fontWeight: FontWeight.w500,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(
-                          height: 12,
-                        ), // Added minimal padding between Remember me and Sign in button
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: _handleLogin,
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                    colors: [
-                                      AppColors.maroon,
-                                      AppColors.deepBlue,
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                0, // Reduced padding as logo will be here
+                horizontalPadding,
+                MediaQuery.viewInsetsOf(context).bottom + 20,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/more/logo.png',
+                      width: logoSize * 0.8,
+                      height: logoSize * 0.8,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Sign In',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.deepBlue,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 450), // Slightly wider for tablets
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.deepBlue.withOpacity(0.1),
+                            blurRadius: 25,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _emailController,
+                            keyboardType: isAdmin
+                                ? TextInputType.emailAddress
+                                : TextInputType.text,
+                            textInputAction: TextInputAction.next,
+                            style: const TextStyle(
+                              color: AppColors.deepBlue,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: InputDecoration(
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Icon(
+                                  isAdmin
+                                      ? Icons.email_rounded
+                                      : Icons.badge_rounded,
+                                  color: AppColors.maroon.withOpacity(0.7),
+                                  size: 22,
+                                ),
+                              ),
+                              labelText: isAdmin ? 'Email' : 'Username',
+                              hintText: 'username@scholarship.com',
+                              labelStyle: TextStyle(
+                                color: AppColors.maroon.withOpacity(0.8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              hintStyle: TextStyle(
+                                color: AppColors.deepBlue.withOpacity(0.3),
+                                fontWeight: FontWeight.w400,
+                              ),
+                              filled: true,
+                              fillColor: AppColors.lightGrey.withOpacity(0.3),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                  color: AppColors.maroon,
+                                  width: 2,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 16,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          TextField(
+                            controller: _passwordController,
+                            obscureText: true,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _handleLogin(),
+                            style: const TextStyle(
+                              color: AppColors.deepBlue,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: InputDecoration(
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Icon(
+                                  Icons.lock_rounded,
+                                  color: AppColors.maroon.withOpacity(0.7),
+                                  size: 22,
+                                ),
+                              ),
+                              labelText: 'Password',
+                              hintText: '......',
+                              labelStyle: TextStyle(
+                                color: AppColors.maroon.withOpacity(0.8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              hintStyle: TextStyle(
+                                color: AppColors.deepBlue.withOpacity(0.3),
+                                fontWeight: FontWeight.w400,
+                              ),
+                              filled: true,
+                              fillColor: AppColors.lightGrey.withOpacity(0.3),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                  color: AppColors.maroon,
+                                  width: 2,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 16,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _rememberMe,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _rememberMe = value ?? false;
+                                    });
+                                  },
+                                  activeColor: AppColors.maroon,
+                                  checkColor: AppColors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  side: BorderSide(
+                                    color: AppColors.maroon.withOpacity(0.6),
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Remember me',
+                                style: TextStyle(
+                                  color: AppColors.deepBlue.withOpacity(0.9),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _handleLogin,
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                      colors: [
+                                        AppColors.maroon,
+                                        AppColors.deepBlue,
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.maroon.withOpacity(0.4),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 6),
+                                      ),
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.maroon.withOpacity(0.4),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 6),
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Sign in',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.white,
+                                      letterSpacing: 0.5,
                                     ),
-                                  ],
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  'Sign in',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12), // Added minimal padding
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
+} 
