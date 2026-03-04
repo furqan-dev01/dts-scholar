@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../theme/app_colors.dart';
 import '../../../global/videos/video_data.dart';
 import 'video_player_screen.dart';
+import '../../../services/student_repository.dart';
+import '../../../services/videos_repository.dart';
 
 class SubjectVideosScreen extends StatefulWidget {
   final String subject;
@@ -18,23 +19,7 @@ class _SubjectVideosScreenState extends State<SubjectVideosScreen> {
   String? _studentId;
   bool _isLoadingId = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadStudentId();
-  }
-
-  Future<void> _loadStudentId() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? studentId =
-        prefs.getString('student_id') ?? prefs.getString('user_uid');
-    if (mounted) {
-      setState(() {
-        _studentId = studentId;
-        _isLoadingId = false;
-      });
-    }
-  }
+  // Old initState/_loadStudentId removed in favor of repository-powered init.
 
   void _openVideoPlayer(
     BuildContext context,
@@ -52,6 +37,25 @@ class _SubjectVideosScreenState extends State<SubjectVideosScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _initRepositories() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString('student_id') ?? prefs.getString('user_uid');
+    if (!mounted) return;
+    setState(() {
+      _studentId = id;
+      _isLoadingId = false;
+    });
+    if (id != null) {
+      await StudentRepository.instance.ensureListening(id);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initRepositories();
   }
 
   @override
@@ -72,53 +76,34 @@ class _SubjectVideosScreenState extends State<SubjectVideosScreen> {
         backgroundColor: AppColors.deepBlue,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('students')
-            .doc(_studentId)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+      body: ValueListenableBuilder<Map<String, dynamic>?>(
+        valueListenable: StudentRepository.instance.student,
+        builder: (context, studentData, _) {
+          final studentClass = studentData?['class'] as String?;
+          final schoolId = studentData?['school_id'] as String?;
+          if (studentClass == null || schoolId == null) {
             return const Center(
               child: CircularProgressIndicator(color: AppColors.maroon),
             );
           }
-
-          final data = snapshot.data!.data() as Map<String, dynamic>?;
-          final studentClass = data?['class'] as String?;
-          final schoolId = data?['school_id'] as String?;
-
-          return StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('videos')
-                .where('school_id', isEqualTo: schoolId)
-                .where('class', isEqualTo: studentClass)
-                .where('subject', isEqualTo: widget.subject)
-                .snapshots(),
-            builder: (context, videoSnapshot) {
-              if (!videoSnapshot.hasData) {
-                return const Center(
-                  child: CircularProgressIndicator(color: AppColors.maroon),
-                );
-              }
-
-              final videos = videoSnapshot.data!.docs.map((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                return VideoModel(
-                  title: data['title'] ?? '',
-                  description: data['description'] ?? '',
-                  thumbnailUrl: data['thumbnailUrl'] ?? '',
-                  videoUrl: data['videoUrl'] ?? '',
-                  subject: data['subject'] ?? '',
-                );
-              }).toList();
-
+          final notifier = VideosRepository.instance.notifier(
+            schoolId,
+            studentClass,
+            widget.subject,
+          );
+          VideosRepository.instance.ensureListening(
+            schoolId,
+            studentClass,
+            widget.subject,
+          );
+          return ValueListenableBuilder<List<VideoModel>>(
+            valueListenable: notifier,
+            builder: (context, videos, _) {
               if (videos.isEmpty) {
                 return const Center(
                   child: Text("No videos found for this subject."),
                 );
               }
-
               return ListView.builder(
                 itemCount: videos.length,
                 itemBuilder: (context, index) {

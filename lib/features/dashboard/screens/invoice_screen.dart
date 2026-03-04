@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../theme/app_colors.dart';
 import '../../../services/loading_service.dart';
+import '../../../services/fees_repository.dart';
 
 class InvoiceScreen extends StatefulWidget {
   const InvoiceScreen({super.key});
@@ -15,18 +15,22 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   String? _studentId;
   bool _isLoadingId = true;
 
+  Future<void> _initRepo() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString('student_id') ?? prefs.getString('user_uid');
+    setState(() {
+      _studentId = id;
+      _isLoadingId = false;
+    });
+    if (id != null) {
+      await FeesRepository.instance.ensureListening(id);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadStudentId();
-  }
-
-  Future<void> _loadStudentId() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _studentId = prefs.getString('student_id') ?? prefs.getString('user_uid');
-      _isLoadingId = false;
-    });
+    _initRepo();
   }
 
   @override
@@ -47,13 +51,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       );
     }
 
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('fees')
-          .doc(_studentId)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return ValueListenableBuilder<Map<String, dynamic>?>(
+      valueListenable: FeesRepository.instance.data,
+      builder: (context, feesData, _) {
+        if (_isLoadingId && feesData == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             LoadingService().show();
           });
@@ -64,17 +65,21 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
           LoadingService().hide();
         });
 
-        if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}"));
-        }
-
         List<Map<String, dynamic>> invoices = [];
         double totalPending = 0.0;
         double totalPaid = 0.0;
-        bool docExists = snapshot.hasData && snapshot.data!.exists;
+        bool docExists = feesData != null;
+        double yearlyAmount = 0.0;
+        String yearlyStatus = 'Unpaid';
 
         if (docExists) {
-          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final data = feesData!;
+
+          if (data['yearly_fund'] is Map) {
+            final yf = Map<String, dynamic>.from(data['yearly_fund'] as Map);
+            yearlyAmount = double.tryParse(yf['amount']?.toString() ?? '0') ?? 0.0;
+            yearlyStatus = yf['status']?.toString() ?? 'Unpaid';
+          }
 
           // Define month order for sorting
           final monthsOrder = {
@@ -229,20 +234,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
 
                   const SizedBox(height: 20),
 
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('students')
-                        .doc(_studentId)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const SizedBox.shrink();
-                      final data =
-                          snapshot.data!.data() as Map<String, dynamic>?;
-                      final paperFundStatus =
-                          data?['paper_fund']?.toString() ?? 'Unpaid';
-                      return _buildPaperFundCard(paperFundStatus);
-                    },
-                  ),
+                  _buildYearlyFundCard(amount: yearlyAmount, status: yearlyStatus),
 
                   const SizedBox(height: 20),
 
@@ -486,6 +478,100 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                       fontSize: 12,
                       color: Colors.grey,
                       fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isPaid
+                  ? const Color(0xFF22C55E).withOpacity(0.12)
+                  : const Color(0xFFF59E0B).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: (isPaid ? const Color(0xFF22C55E) : const Color(0xFFF59E0B))
+                      .withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              status,
+              style: TextStyle(
+                color: isPaid ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildYearlyFundCard({required double amount, required String status}) {
+    final isPaid = status == 'Paid';
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.deepBlue.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.deepBlue.withOpacity(0.12),
+                      AppColors.maroon.withOpacity(0.08),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.savings_rounded,
+                  color: AppColors.deepBlue,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Yearly Fund",
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.deepBlue,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Amount: Rs ${amount.toStringAsFixed(2)}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
