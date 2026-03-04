@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../theme/app_colors.dart';
 import 'loading_screen.dart';
-import '../../admin/screens/admin_dashboard_screen.dart';
 import '../../dashboard/screens/dashboard_screen.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/loading_service.dart';
 import '../../../widgets/wave_clipper.dart';
 
 class LoginScreen extends StatefulWidget {
-  final String userRole;
-  const LoginScreen({super.key, this.userRole = 'student'});
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -65,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
     LoadingService().show();
 
     try {
-      if (widget.userRole == 'student') {
+      {
         // Student Login
         final studentData = await _authService.loginStudent(input, password);
 
@@ -97,29 +95,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         }
-      } else {
-        // Admin Login
-        await _authService.signInWithEmailAndPassword(input, password);
-
-        if (!mounted) return;
-
-        if (_rememberMe) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('saved_email', input);
-          await prefs.setString('saved_password', password);
-          await prefs.setBool('remember_me', true);
-          await prefs.setString('user_role', 'admin');
-        } else {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('saved_email');
-          await prefs.remove('saved_password');
-          await prefs.setBool('remember_me', false);
-          await prefs.remove('user_role');
-        }
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
-        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -143,7 +118,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = widget.userRole == 'admin';
     final screenSize = MediaQuery.sizeOf(context);
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;
@@ -275,9 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           TextField(
                             controller: _emailController,
-                            keyboardType: isAdmin
-                                ? TextInputType.emailAddress
-                                : TextInputType.text,
+                            keyboardType: TextInputType.text,
                             textInputAction: TextInputAction.next,
                             style: const TextStyle(
                               color: AppColors.deepBlue,
@@ -287,14 +259,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               prefixIcon: Padding(
                                 padding: const EdgeInsets.all(12),
                                 child: Icon(
-                                  isAdmin
-                                      ? Icons.email_rounded
-                                      : Icons.badge_rounded,
+                                  Icons.badge_rounded,
                                   color: AppColors.maroon.withOpacity(0.7),
                                   size: 22,
                                 ),
                               ),
-                              labelText: isAdmin ? 'Email' : 'Username',
+                              labelText: 'Username',
                               hintText: 'username@scholarship.com',
                               labelStyle: TextStyle(
                                 color: AppColors.maroon.withOpacity(0.8),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../theme/app_colors.dart';
@@ -13,7 +14,8 @@ import '../../../global/videos/video_data.dart';
 import 'videos_screen.dart';
 import 'video_player_screen.dart';
 import 'invoice_screen.dart';
-import 'notification_screen.dart';
+import '../../notes/screens/notes_screen.dart';
+import 'notification_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -37,7 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       DashboardContent(onTabSwitch: switchToTab),
       const VideosScreen(),
       const InvoiceScreen(),
-      const NotificationScreen(),
+      const NotesScreen(),
     ];
 
     return Scaffold(
@@ -96,9 +98,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 label: 'Invoice',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.notifications_outlined, size: 24),
-                activeIcon: Icon(Icons.notifications_rounded, size: 26),
-                label: 'Notifications',
+                icon: Icon(Icons.description_outlined, size: 24),
+                activeIcon: Icon(Icons.description_rounded, size: 26),
+                label: 'Notes',
               ),
             ],
           ),
@@ -125,6 +127,8 @@ class _DashboardContentState extends State<DashboardContent> {
   bool _isLoading = true;
   // ignore: unused_field
   StreamSubscription? _studentSubscription;
+  final GlobalKey _profileIconKey = GlobalKey();
+  OverlayEntry? _profileMenuEntry;
 
   @override
   void initState() {
@@ -294,6 +298,96 @@ class _DashboardContentState extends State<DashboardContent> {
     }
   }
 
+  void _showProfileMenu(BuildContext context) {
+    if (_profileMenuEntry != null) return;
+    final iconContext = _profileIconKey.currentContext;
+    if (iconContext == null) return;
+    final box = iconContext.findRenderObject() as RenderBox;
+    final offset = box.localToGlobal(Offset.zero);
+    final size = box.size;
+    final menuWidth = 180.0;
+    final menuTop = offset.dy + size.height + 8;
+    final menuLeft = offset.dx + size.width - menuWidth;
+
+    _profileMenuEntry = OverlayEntry(
+      builder: (context) => GestureDetector(
+        onTap: _hideProfileMenu,
+        behavior: HitTestBehavior.translucent,
+        child: Stack(
+          children: [
+            Positioned(
+              left: menuLeft,
+              top: menuTop,
+              child: Material(
+                color: Colors.transparent,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(
+                      width: menuWidth,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: const Color(0x11000000),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              _hideProfileMenu();
+                              _handleLogout();
+                            },
+                            child: Container(
+                              height: 48,
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(Icons.logout_rounded,
+                                      color: Colors.red, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Logout',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_profileMenuEntry!);
+  }
+
+  void _hideProfileMenu() {
+    _profileMenuEntry?.remove();
+    _profileMenuEntry = null;
+  }
   Widget _buildWelcomeCard() {
     return Container(
       width: double.infinity,
@@ -595,31 +689,101 @@ class _DashboardContentState extends State<DashboardContent> {
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: _handleLogout,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (context) => const NotificationDialog(),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: const CircleAvatar(
-                        radius: 24,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.logout_rounded,
-                          color: Colors.red,
-                          size: 28,
+                          child: ValueListenableBuilder<List<QueryDocumentSnapshot>>(
+                            valueListenable: NoticeService.instance.noticesNotifier,
+                            builder: (context, notices, _) {
+                              final count = notices.length;
+                              return Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  const CircleAvatar(
+                                    radius: 24,
+                                    backgroundColor: Colors.white,
+                                    child: Icon(
+                                      Icons.notifications_rounded,
+                                      color: AppColors.deepBlue,
+                                      size: 28,
+                                    ),
+                                  ),
+                                  if (count > 0)
+                                    Positioned(
+                                      right: -2,
+                                      top: -2,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.maroon,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: Colors.white, width: 1),
+                                        ),
+                                        child: Text(
+                                          count > 99 ? '99+' : '$count',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        key: _profileIconKey,
+                        onTap: () => _showProfileMenu(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              Icons.person_rounded,
+                              color: AppColors.maroon,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
