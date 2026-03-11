@@ -16,6 +16,8 @@ import 'video_player_screen.dart';
 import 'invoice_screen.dart';
 import '../../notes/screens/notes_screen.dart';
 import 'notification_dialog.dart';
+import '../../homework/models/homework_model.dart';
+import '../../homework/widgets/homework_item.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -260,6 +262,18 @@ class _DashboardContentState extends State<DashboardContent> {
                 const SizedBox(height: 28),
 
                 _buildSectionHeader(
+                  title: "Today's Homework",
+                  subtitle: "What's due",
+                  onSeeAll: () => Navigator.of(context).pushNamed('/homework'),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _buildTodayHomework(),
+                ),
+                const SizedBox(height: 24),
+
+                _buildSectionHeader(
                   title: 'Recent Videos',
                   subtitle: 'Keep learning',
                   onSeeAll: () => widget.onTabSwitch(1),
@@ -274,6 +288,47 @@ class _DashboardContentState extends State<DashboardContent> {
         );
       },
     );
+  }
+
+  Widget _buildTodayHomework() {
+    final items = _todayHomeworkItems();
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.deepBlue.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(color: AppColors.deepBlue.withOpacity(0.06)),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) => HomeworkItem(item: items[index]),
+      ),
+    );
+  }
+
+  List<HomeworkModel> _todayHomeworkItems() {
+    return const [
+      HomeworkModel(
+        subject: 'Math',
+        description: 'Algebra Questions 1–20',
+        icon: Icons.calculate_rounded,
+      ),
+      HomeworkModel(
+        subject: 'English',
+        description: 'Essay writing',
+        icon: Icons.menu_book_rounded,
+      ),
+    ];
   }
 
   Future<void> _handleLogout() async {
@@ -343,6 +398,37 @@ class _DashboardContentState extends State<DashboardContent> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          InkWell(
+                            onTap: () {
+                              _hideProfileMenu();
+                              Navigator.of(context).pushNamed('/homework');
+                            },
+                            child: Container(
+                              height: 48,
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(Icons.assignment_rounded,
+                                      color: AppColors.deepBlue, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Homework',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: Color(0xFFEEEEEE),
+                          ),
                           InkWell(
                             onTap: () {
                               _hideProfileMenu();
@@ -588,7 +674,7 @@ class _DashboardContentState extends State<DashboardContent> {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.deepBlue, Color(0xFF003380), AppColors.maroon],
+              colors: [AppColors.deepBlue, AppColors.deepBlue, AppColors.deepBlue],
               stops: [0.0, 0.5, 1.0],
             ),
             borderRadius: const BorderRadius.only(

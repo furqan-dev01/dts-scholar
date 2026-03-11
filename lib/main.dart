@@ -4,6 +4,7 @@ import 'features/splash/screens/splash_screen.dart';
 import 'widgets/global_loader_ui.dart';
 import 'services/local_notification_service.dart';
 import 'services/background_service.dart';
+import 'features/homework/screens/homework_screen.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -40,6 +41,9 @@ class MyApp extends StatelessWidget {
       ),
       builder: (context, child) {
         return GlobalLoaderUI(child: child ?? const SizedBox.shrink());
+      },
+      routes: {
+        '/homework': (context) => const HomeworkScreen(),
       },
       home: const SplashScreen(),
     );

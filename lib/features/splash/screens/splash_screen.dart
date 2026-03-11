@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../../auth/screens/login_screen.dart';
 import '../../../theme/app_colors.dart';
 
@@ -9,13 +10,15 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _logoFade;
   late Animation<Offset> _topArrowSlide;
   late Animation<Offset> _bottomArrowSlide;
   late Animation<Offset> _leftArrowSlide;
   late Animation<Offset> _rightArrowSlide;
+  late AnimationController _starsController;
+  late List<_Star> _stars;
 
   @override
   void initState() {
@@ -62,6 +65,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
     _navigateToNext();
+
+    _starsController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    )..repeat(reverse: true);
+    final rnd = math.Random();
+    _stars = List.generate(90, (i) {
+      final x = rnd.nextDouble();
+      final y = rnd.nextDouble();
+      final r = 0.6 + rnd.nextDouble() * 1.4;
+      final phase = rnd.nextDouble() * 2 * math.pi;
+      return _Star(x, y, r, phase);
+    });
   }
 
   Future<void> _navigateToNext() async {
@@ -81,45 +97,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void dispose() {
     _controller.dispose();
+    _starsController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.deepBlue,
       body: Stack(
         children: [
-          // Top Arrow
-          Align(
-            alignment: Alignment.topCenter,
-            child: SlideTransition(
-              position: _topArrowSlide,
-              child: _buildArrow(AppColors.deepBlue, quarterTurns: 2),
-            ),
-          ),
-          // Bottom Arrow
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: SlideTransition(
-              position: _bottomArrowSlide,
-              child: _buildArrow(AppColors.maroon, quarterTurns: 0),
-            ),
-          ),
-          // Left Arrow
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SlideTransition(
-              position: _leftArrowSlide,
-              child: _buildArrow(AppColors.deepBlue, quarterTurns: 1),
-            ),
-          ),
-          // Right Arrow
-          Align(
-            alignment: Alignment.centerRight,
-            child: SlideTransition(
-              position: _rightArrowSlide,
-              child: _buildArrow(AppColors.maroon, quarterTurns: 3),
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _starsController,
+              builder: (context, _) {
+                return CustomPaint(
+                  painter: _StarFieldPainter(_stars, _starsController.value),
+                );
+              },
             ),
           ),
           // Center Content (Logo + Text)
@@ -151,14 +146,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                     'Welcome\nTo\nScholarship School',
-                     textAlign: TextAlign.center,
-                     style: TextStyle(
-                       fontSize: 26,
-                       fontWeight: FontWeight.bold,
-                       color: AppColors.deepBlue,
-                     ),
-                   ),
+                    'Welcome\nTo\nScholarship School',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -168,7 +163,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.maroon,
+                        color: Colors.white,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -187,7 +182,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         'product by DevTriSoft',
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.deepBlue.withOpacity(0.7),
+                          color: Colors.white.withOpacity(0.9),
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,
                         ),
@@ -203,48 +198,36 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildArrow(Color color, {required int quarterTurns}) {
-    return RotatedBox(
-      quarterTurns: quarterTurns,
-      child: ClipPath(
-        clipper: ArrowClipper(),
-        child: Container(
-          width: 150,
-          height: 120,
-          color: color,
-        ),
-      ),
-    );
-  }
 }
 
-class ArrowClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    Path path = Path();
-    double radius = 30.0;
-    
-    // Create a rounded triangle pointing up
-    path.moveTo(size.width / 2, 0); // Tip
-    path.lineTo(size.width, size.height); // Bottom right
-    path.lineTo(0, size.height); // Bottom left
-    path.close();
-    
-    // To make it rounded and look like the image (which has very soft corners)
-    // we use a more sophisticated path.
-    path = Path();
-    path.moveTo(size.width / 2, 0);
-    path.quadraticBezierTo(size.width / 2 + 10, 5, size.width - 20, size.height - 10);
-    path.quadraticBezierTo(size.width, size.height, size.width - 40, size.height);
-    path.lineTo(40, size.height);
-    path.quadraticBezierTo(0, size.height, 20, size.height - 10);
-    path.quadraticBezierTo(size.width / 2 - 10, 5, size.width / 2, 0);
-    path.close();
+class _Star {
+  final double x;
+  final double y;
+  final double r;
+  final double phase;
+  const _Star(this.x, this.y, this.r, this.phase);
+}
 
-    return path;
+class _StarFieldPainter extends CustomPainter {
+  final List<_Star> stars;
+  final double t;
+  _StarFieldPainter(this.stars, this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    for (final s in stars) {
+      final dx = s.x * size.width;
+      final dy = s.y * size.height;
+      final alpha = 0.6 + 0.4 * math.sin(2 * math.pi * t + s.phase);
+      paint.color = Colors.white.withOpacity(alpha.clamp(0.0, 1.0));
+      canvas.drawCircle(Offset(dx, dy), s.r, paint);
+    }
   }
 
   @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  bool shouldRepaint(covariant _StarFieldPainter oldDelegate) {
+    return oldDelegate.t != t || oldDelegate.stars != stars;
+  }
 }
 
